@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('dashboard', () => ({
+            loggedIn: false,
+            password: '',
+            error: '',
+            ws: null,
+            wsStatus: 'Disconnected',
+            state: {
+                connectedClients: 0,
+                eventTopics: {},
+                rpcTopics: {},
+                topicConfigs: {}
+            },
+            showConfigModal: false,
+            currentTopic: '',
+            currentConfig: { dlqTopic: '', initialBackoff: 0, maxRetries: 0 },
+            saveStatus: '',
+
+            login() {
+                this.error = '';
+                fetch('/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: this.password })
+                })
+                    .then(response => {
+                        if (!response.ok) throw new Error('Invalid password');
+                        return response.json();
+                    })
+                    .then(() => {
+                        this.loggedIn = true;
+                        this.initWebSocket();
+                    })
+                    .catch(() => {
+                        this.error = 'Login failed. Please check the password.';
+                    });
+            },
+
+            initWebSocket() {
+                const wsUrl = `ws://${window.location.host}/ws`;
+                this.ws = new WebSocket(wsUrl);
+
+                this.ws.onopen = () => { this.wsStatus = 'Connected'; };
+                this.ws.onmessage = (event) => {
+                    try { this.state = JSON.parse(event.data); } catch (e) { console.error('Failed to parse WebSocket message:', e); }
+                };
+                this.ws.onclose = () => {
+                    this.wsStatus = 'Disconnected. Retrying...';
+                    setTimeout(() => this.initWebSocket(), 3000);
+                };
+                this.ws.onerror = (error) => {
+                    this.wsStatus = 'Error';
+                    this.ws.close();
+                };
+            },
+
+            openConfigModal(topic) {
+                this.currentTopic = topic;
+                this.saveStatus = '';
+                // Use existing config or set defaults
+                const defaultConfig = {
+                    dlqTopic: `dlq.${topic}`,
+                    maxRetries: 5,
+                    initialBackoff: 250
+                };
+                this.currentConfig = { ...(this.state.topicConfigs[topic] || defaultConfig) };
+                this.showConfigModal = true;
+            },
+
+            saveConfig() {
+                this.saveStatus = 'Saving...';
+                fetch('/api/config/topic', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        topic: this.currentTopic,
+                        config: {
+                            dlqTopic: this.currentConfig.dlqTopic,
+                            maxRetries: parseInt(this.currentConfig.maxRetries, 10),
+                            initialBackoff: parseInt(this.currentConfig.initialBackoff, 10)
+                        }
+                    })
+                })
+                    .then(response => {
+                        if (!response.ok) throw new Error('Failed to save');
+                        this.saveStatus = 'Saved!';
+                        setTimeout(() => this.showConfigModal = false, 1000);
+                    })
+                    .catch(() => {
+                        this.saveStatus = 'Error: Could not save config.';
+                    });
+            }
+        }));
+    });
+</script>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRPC Broker Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        [x-cloak] {
+            display: none !important;
+        }
+
+        .modal-bg {
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+    </style>
+</head>
+
+<body class="bg-gray-900 text-gray-200 font-sans">
+
+    <div x-data="dashboard" x-cloak class="min-h-screen flex flex-col items-center justify-center p-4">
+
+        <!-- Login Screen -->
+        <template x-if="!loggedIn">
+            <div class="w-full max-w-sm bg-gray-800 p-8 rounded-lg shadow-lg">
+                <h1 class="text-3xl font-bold text-center text-cyan-400 mb-2">TRPC Broker</h1>
+                <p class="text-center text-gray-400 mb-6">Dashboard Login</p>
+                <form @submit.prevent="login()">
+                    <div class="mb-4">
+                        <label for="password" class="block text-gray-400 text-sm font-bold mb-2">Admin Password</label>
+                        <input x-model="password" type="password" id="password" name="password"
+                            class="shadow appearance-none border border-gray-700 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-cyan-500"
+                            placeholder="******************">
+                    </div>
+                    <template x-if="error">
+                        <p class="text-red-500 text-xs italic mb-4" x-text="error"></p>
+                    </template>
+                    <div class="flex items-center justify-between">
+                        <button type="submit"
+                            class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300">
+                            Login
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </template>
+
+        <!-- Dashboard -->
+        <template x-if="loggedIn">
+            <div class="w-full max-w-6xl">
+                <header class="mb-8 flex justify-between items-center">
+                    <div>
+                        <h1 class="text-4xl font-bold text-cyan-400">TRPC Broker Dashboard</h1>
+                        <p class="text-gray-400">Real-time broker status</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-lg">Connected Clients: <span x-text="state.connectedClients"
+                                class="font-bold text-green-400"></span></p>
+                        <p class="text-sm text-gray-500"
+                            :class="{ 'text-green-400': wsStatus === 'Connected', 'text-red-500': wsStatus !== 'Connected' }">
+                            Status: <span x-text="wsStatus"></span>
+                        </p>
+                    </div>
+                </header>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- RPC Topics -->
+                    <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                        <h2 class="text-2xl font-semibold mb-4 border-b border-gray-700 pb-2">RPC Handlers</h2>
+                        <div class="overflow-y-auto max-h-96">
+                            <template x-if="Object.keys(state.rpcTopics).length === 0">
+                                <p class="text-gray-500 italic">No RPC handlers registered.</p>
+                            </template>
+                            <table class="w-full text-left">
+                                <thead>
+                                    <tr>
+                                        <th class="py-2 px-4 text-cyan-400">Topic</th>
+                                        <th class="py-2 px-4 text-cyan-400">Instances</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template x-for="topic in Object.keys(state.rpcTopics).sort()" :key="topic">
+                                        <tr class="border-t border-gray-700 hover:bg-gray-700/50">
+                                            <td class="py-2 px-4"><a href="#" @click.prevent="openConfigModal(topic)"
+                                                    class="text-cyan-400 hover:underline" x-text="topic"></a></td>
+                                            <td class="py-2 px-4 font-mono" x-text="state.rpcTopics[topic]"></td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Event Topics -->
+                    <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                        <h2 class="text-2xl font-semibold mb-4 border-b border-gray-700 pb-2">Event Subscribers</h2>
+                        <div class="overflow-y-auto max-h-96">
+                            <template x-if="Object.keys(state.eventTopics).length === 0">
+                                <p class="text-gray-500 italic">No event subscribers found.</p>
+                            </template>
+                            <table class="w-full text-left">
+                                <thead>
+                                    <tr>
+                                        <th class="py-2 px-4 text-cyan-400">Topic</th>
+                                        <th class="py-2 px-4 text-cyan-400">Subscriber Groups</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template x-for="topic in Object.keys(state.eventTopics).sort()" :key="topic">
+                                        <tr class="border-t border-gray-700 hover:bg-gray-700/50">
+                                            <td class="py-2 px-4"><a href="#" @click.prevent="openConfigModal(topic)"
+                                                    class="text-cyan-400 hover:underline" x-text="topic"></a></td>
+                                            <td class="py-2 px-4">
+                                                <template x-for="group in state.eventTopics[topic].groups"
+                                                    :key="group.id">
+                                                    <span
+                                                        class="inline-block bg-gray-700 rounded-full px-3 py-1 text-sm font-semibold text-gray-300 mr-2 mb-2"
+                                                        x-text="`${group.id} (${group.clients})`"></span>
+                                                </template>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <!-- Topic Config Modal -->
+        <template x-if="showConfigModal">
+            <div class="fixed inset-0 modal-bg flex items-center justify-center z-50"
+                @click.self="showConfigModal = false">
+                <div class="bg-gray-800 rounded-lg shadow-xl p-8 w-full max-w-lg" @click.stop>
+                    <h2 class="text-2xl font-bold mb-4">Configure Topic</h2>
+                    <p class="text-cyan-400 font-mono break-all mb-6" x-text="currentTopic"></p>
+
+                    <form @submit.prevent="saveConfig()">
+                        <div class="mb-4">
+                            <label class="block text-gray-400 text-sm font-bold mb-2" for="dlqTopic">Dead-Letter Queue
+                                (DLQ) Topic</label>
+                            <input
+                                class="shadow appearance-none border border-gray-700 rounded w-full py-2 px-3 bg-gray-700 text-gray-200"
+                                id="dlqTopic" type="text" x-model="currentConfig.dlqTopic">
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-gray-400 text-sm font-bold mb-2" for="maxRetries">Max
+                                Retries</label>
+                            <input
+                                class="shadow appearance-none border border-gray-700 rounded w-full py-2 px-3 bg-gray-700 text-gray-200"
+                                id="maxRetries" type="number" x-model.number="currentConfig.maxRetries">
+                        </div>
+                        <div class="mb-6">
+                            <label class="block text-gray-400 text-sm font-bold mb-2" for="initialBackoff">Initial
+                                Backoff (ms)</label>
+                            <input
+                                class="shadow appearance-none border border-gray-700 rounded w-full py-2 px-3 bg-gray-700 text-gray-200"
+                                id="initialBackoff" type="number" x-model.number="currentConfig.initialBackoff">
+                        </div>
+                        <div class="flex items-center justify-end space-x-4">
+                            <p x-show="saveStatus" class="text-sm italic"
+                                :class="{ 'text-green-400': saveStatus === 'Saved!', 'text-red-500': saveStatus.startsWith('Error') }"
+                                x-text="saveStatus"></p>
+                            <button @click="showConfigModal = false" type="button"
+                                class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Cancel</button>
+                            <button type="submit"
+                                class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded">Save</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </template>
+    </div>
+
+</body>
+
+</html>

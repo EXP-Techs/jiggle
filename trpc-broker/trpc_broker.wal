@@ -1,0 +1,113 @@
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"REGISTER","topic":"user.v1.UserService.GetUserProfile"}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"REGISTER","topic":"user.v1.UserService.GetUserProfile"}
+{"action":"REQUEST","topic":"user.v1.UserService.GetUserProfile","payload":{"user_id":"u-123"},"correlation_id":"cc548ddc-5b3e-410a-a88c-76baeb952078"}
+{"action":"RESPOND","payload":{"email":"alice@example.com","name":"Alice","user_id":"u-123"},"correlation_id":"cc548ddc-5b3e-410a-a88c-76baeb952078"}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-0"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-1"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-2"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-3"}}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"REGISTER","topic":"user.v1.UserService.GetUserProfile"}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"REQUEST","topic":"user.v1.UserService.GetUserProfile","payload":{"user_id":"u-123"},"correlation_id":"bb318903-098a-49da-9157-26219b905ed3"}
+{"action":"RESPOND","payload":{"email":"alice@example.com","name":"Alice","user_id":"u-123"},"correlation_id":"bb318903-098a-49da-9157-26219b905ed3"}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-0"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-1"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-2"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-3"}}
+{"action":"REGISTER","topic":"user.v1.UserService.GetUserProfile"}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"REQUEST","topic":"user.v1.UserService.GetUserProfile","payload":{"user_id":"u-123"},"correlation_id":"300d0fdc-30c7-4560-b66f-83d07d0ad1a4"}
+{"action":"RESPOND","payload":{"email":"alice@example.com","name":"Alice","user_id":"u-123"},"correlation_id":"300d0fdc-30c7-4560-b66f-83d07d0ad1a4"}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-0"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-1"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-2"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-3"}}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"REGISTER","topic":"user.v1.UserService.GetUserProfile"}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"REQUEST","topic":"user.v1.UserService.GetUserProfile","payload":{"user_id":"u-123"},"correlation_id":"4a1650e8-6d9b-4dfc-9bfb-41996ca0408f"}
+{"action":"RESPOND","payload":{"email":"alice@example.com","name":"Alice","user_id":"u-123"},"correlation_id":"4a1650e8-6d9b-4dfc-9bfb-41996ca0408f"}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-0"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-1"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-2"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-3"}}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"REGISTER","topic":"user.v1.UserService.GetUserProfile"}
+{"action":"REQUEST","topic":"user.v1.UserService.GetUserProfile","payload":{"user_id":"u-123"},"correlation_id":"61fb4264-1da2-4e19-8b50-f0ba8d507013"}
+{"action":"RESPOND","payload":{"email":"alice@example.com","name":"Alice","user_id":"u-123"},"correlation_id":"61fb4264-1da2-4e19-8b50-f0ba8d507013"}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-0"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-1"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-2"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-3"}}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"REGISTER","topic":"user.v1.UserService.GetUserProfile"}
+{"action":"REQUEST","topic":"user.v1.UserService.GetUserProfile","payload":{"user_id":"u-123"},"correlation_id":"9b9bf3e6-3382-4107-8cf7-c2b02242b2ba"}
+{"action":"RESPOND","payload":{"email":"alice@example.com","name":"Alice","user_id":"u-123"},"correlation_id":"9b9bf3e6-3382-4107-8cf7-c2b02242b2ba"}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-0"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-1"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-2"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-3"}}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"REGISTER","topic":"user.v1.UserService.GetUserProfile"}
+{"action":"REQUEST","topic":"user.v1.UserService.GetUserProfile","payload":{"user_id":"u-123"},"correlation_id":"39759363-f660-44b2-92f0-e644ae44f863"}
+{"action":"RESPOND","payload":{"email":"alice@example.com","name":"Alice","user_id":"u-123"},"correlation_id":"39759363-f660-44b2-92f0-e644ae44f863"}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-0"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-1"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-2"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-3"}}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"REGISTER","topic":"user.v1.UserService.GetUserProfile"}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"REQUEST","topic":"user.v1.UserService.GetUserProfile","payload":{"user_id":"u-123"},"correlation_id":"1c395422-2341-4673-a2cc-bb22f2efe7a9"}
+{"action":"RESPOND","payload":{"email":"alice@example.com","name":"Alice","user_id":"u-123"},"correlation_id":"1c395422-2341-4673-a2cc-bb22f2efe7a9"}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-0"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-1"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-2"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-3"}}
+{"action":"REGISTER","topic":"user.v1.UserService.GetUserProfile"}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"REGISTER","topic":"user.v1.UserService.GetUserProfile"}
+{"action":"REQUEST","topic":"user.v1.UserService.GetUserProfile","payload":{"user_id":"u-123"},"correlation_id":"1ecf4327-7489-47cd-94b8-d7c401ba4511"}
+{"action":"RESPOND","payload":{"email":"alice@example.com","name":"Alice","user_id":"u-123"},"correlation_id":"1ecf4327-7489-47cd-94b8-d7c401ba4511"}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-0"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-1"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-2"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-3"}}
+{"action":"REGISTER","topic":"user.v1.UserService.GetUserProfile"}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"REQUEST","topic":"user.v1.UserService.GetUserProfile","payload":{"user_id":"u-123"},"correlation_id":"c16290be-3ed4-4e76-bab4-ad214ded37a9"}
+{"action":"RESPOND","payload":{"email":"alice@example.com","name":"Alice","user_id":"u-123"},"correlation_id":"c16290be-3ed4-4e76-bab4-ad214ded37a9"}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-0"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-1"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-2"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-3"}}
+{"action":"REGISTER","topic":"user.v1.UserService.GetUserProfile"}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"REQUEST","topic":"user.v1.UserService.GetUserProfile","payload":{"user_id":"u-123"},"correlation_id":"ef5cf981-3647-4c34-8b90-87f4fc38ded8"}
+{"action":"RESPOND","payload":{"email":"alice@example.com","name":"Alice","user_id":"u-123"},"correlation_id":"ef5cf981-3647-4c34-8b90-87f4fc38ded8"}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-0"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-1"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-2"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-3"}}

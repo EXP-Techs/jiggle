@@ -1,0 +1,77 @@
+// user_service.trpc
+
+syntax = "trpc/v1";
+
+// It's good practice to version your packages.
+package user.v1;
+
+// You can import common types from other .trpc or even standard .proto files.
+// For this example, we'll keep it self-contained.
+
+// ========== MESSAGE DEFINITIONS ==========
+// Messages define the data structures that are sent over the wire.
+
+// User represents the core user entity in the system.
+message User {
+  string user_id = 1;    // Unique identifier for the user.
+  string name = 2;       // User's full name.
+  string email = 3;      // User's email address (should be unique).
+  bool is_active = 4;    // Flag to indicate if the account is active.
+  int64 created_at = 5;  // Unix timestamp of when the user was created.
+}
+
+// GetUserRequest is the input for fetching a single user.
+message GetUserRequest {
+  string user_id = 1;
+}
+
+// CreateUserRequest contains the necessary info to create a new user.
+message CreateUserRequest {
+  string name = 1;
+  string email = 2;
+  string password = 3; // Password would be handled securely by the service.
+}
+
+// UpdateUserRequest contains fields that can be updated for a user.
+message UpdateUserRequest {
+  string user_id = 1;
+  string name = 2;
+  string email = 3;
+}
+
+// ========== SERVICE DEFINITION ==========
+// A service groups related RPCs and Events together.
+// This defines the public API for the UserService.
+
+service UserService {
+
+  // --- RPCs (Synchronous Calls) ---
+
+  // GetUser retrieves a user's profile by their ID.
+  // This is a typical synchronous "read" operation.
+  rpc GetUser(GetUserRequest) returns (User);
+
+  // CreateUser creates a new user account.
+  // It's synchronous because the client needs to know if the creation
+  // was successful and get the ID of the newly created user.
+  rpc CreateUser(CreateUserRequest) returns (User);
+
+  // UpdateUser updates a user's profile information.
+  rpc UpdateUser(UpdateUserRequest) returns (User);
+
+
+  // --- Events (Asynchronous Notifications) ---
+
+  // UserCreated is published whenever a new user is successfully created.
+  // Other services (e.g., an email service to send a welcome message)
+  // can subscribe to this topic without blocking the original request.
+  event UserCreated(User);
+
+  // UserUpdated is published whenever a user's profile changes.
+  // Services like search or analytics can listen for these events
+  // to keep their own data in sync.
+  event UserUpdated(User);
+
+  // UserDeleted is published when a user is removed from the system.
+  event UserDeleted(GetUserRequest); // Reusing the request message is efficient.
+}
