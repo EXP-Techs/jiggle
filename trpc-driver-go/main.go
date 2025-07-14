@@ -279,3 +279,90 @@ func (c *Client) Request(topic string, payload any, timeout time.Duration) (Mess
 		return Message{}, errors.New("request timed out")
 	}
 }
+
+// --- Example Usage ---
+
+func main() {
+	// Change to "trpcs" to test with TLS enabled on the broker.
+	brokerURI := "trpc://admin:admin1234@localhost:8772"
+
+	// --- Start the Service Provider (Server) ---
+	go func() {
+		serverClient, err := Connect(brokerURI)
+		if err != nil {
+			log.Fatalf("Server client failed to connect: %v", err)
+		}
+		defer serverClient.Close()
+
+		getUserHandler := func(req Message) (any, error) {
+			log.Printf("[Server] Received RPC request for GetUserProfile: %s", string(req.Payload))
+			return map[string]any{
+				"user_id": "u-123", "name": "Alice", "email": "alice@example.com",
+			}, nil
+		}
+		err = serverClient.Register("user.v1.UserService.GetUserProfile", getUserHandler)
+		if err != nil {
+			log.Fatalf("Server could not register handler: %v", err)
+		}
+		log.Println("[Server] Successfully registered GetUserProfile handler.")
+		select {}
+	}()
+
+	// --- Start two subscribers with the SAME subscriber_id to test load balancing ---
+	for i := 1; i <= 2; i++ {
+		instanceNum := i
+		go func() {
+			subClient, err := Connect(brokerURI)
+			if err != nil {
+				log.Fatalf("[Sub-%d] client failed to connect: %v", instanceNum, err)
+			}
+			defer subClient.Close()
+
+			eventHandler := func(msg Message) {
+				log.Printf("[Sub-%d] Received event on topic '%s': %s", instanceNum, msg.Topic, string(msg.Payload))
+			}
+			err = subClient.Subscribe("user.v1.UserService.UserCreated", "email-service-group", eventHandler)
+			if err != nil {
+				log.Fatalf("[Sub-%d] could not subscribe: %v", instanceNum, err)
+			}
+			log.Printf("[Sub-%d] Successfully subscribed to UserCreated events.", instanceNum)
+			select {}
+		}()
+	}
+
+	// Wait a moment for the server and subscribers to register.
+	time.Sleep(2 * time.Second)
+
+	// --- Start the Requester (Client) in its own goroutine ---
+	go func() {
+		log.Println("[Client] Starting requester...")
+		requesterClient, err := Connect(brokerURI)
+		if err != nil {
+			log.Fatalf("Requester client failed to connect: %v", err)
+		}
+		defer requesterClient.Close()
+
+		log.Println("[Client] Sending synchronous request to GetUserProfile...")
+		requestPayload := map[string]string{"user_id": "u-123"}
+		response, err := requesterClient.Request("user.v1.UserService.GetUserProfile", requestPayload, 5*time.Second)
+		if err != nil {
+			log.Fatalf("[Client] Request failed: %v", err)
+		}
+		log.Printf("[Client] Received RPC response: %s", string(response.Payload))
+
+		for i := 0; i < 4; i++ {
+			log.Printf("[Client] Publishing UserCreated event #%d...", i+1)
+			eventPayload := map[string]any{"user_id": fmt.Sprintf("u-new-%d", i), "name": "New User"}
+			err = requesterClient.Publish("user.v1.UserService.UserCreated", eventPayload)
+			if err != nil {
+				log.Fatalf("[Client] Failed to publish event: %v", err)
+			}
+			time.Sleep(100 * time.Millisecond)
+		}
+
+		log.Println("[Client] Finished tasks, staying connected.")
+	}()
+
+	log.Println("Example services are running. Press Ctrl+C to exit.")
+	select {}
+}

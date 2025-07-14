@@ -1,98 +1,98 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <script>
     document.addEventListener('alpine:init', () => {
         Alpine.data('dashboard', () => ({
-            loggedIn: false,
-            password: '',
-            error: '',
-            ws: null,
-            wsStatus: 'Disconnected',
-            state: {
-                connectedClients: 0,
-                eventTopics: {},
-                rpcTopics: {},
-                topicConfigs: {}
-            },
-            showConfigModal: false,
-            currentTopic: '',
+            loggedIn: false, password: '', error: '', ws: null, wsStatus: 'Disconnected',
+            state: { connectedClients: 0, eventTopics: {}, rpcTopics: {}, topicConfigs: {} },
+            showConfigModal: false, currentTopic: '',
             currentConfig: { dlqTopic: '', initialBackoff: 0, maxRetries: 0 },
             saveStatus: '',
+            storedMessages: [],
+            publish: { payload: '{\n  "message": "hello"\n}', status: '' },
+            admin: { currentPassword: '', newPassword: '', confirmPassword: '', status: '', error: '' },
 
+            init() {
+                if (localStorage.getItem('trpc_logged_in') === 'true') {
+                    this.loggedIn = true;
+                    this.initWebSocket();
+                }
+            },
             login() {
                 this.error = '';
-                fetch('/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ password: this.password })
-                })
-                    .then(response => {
-                        if (!response.ok) throw new Error('Invalid password');
-                        return response.json();
-                    })
+                fetch('/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: this.password }) })
+                    .then(res => { if (!res.ok) throw new Error(); return res.json(); })
                     .then(() => {
                         this.loggedIn = true;
+                        localStorage.setItem('trpc_logged_in', 'true');
                         this.initWebSocket();
                     })
-                    .catch(() => {
-                        this.error = 'Login failed. Please check the password.';
-                    });
+                    .catch(() => { this.error = 'Login failed. Please check the password.'; });
             },
-
+            logout() {
+                localStorage.removeItem('trpc_logged_in');
+                this.loggedIn = false;
+                if (this.ws) {
+                    this.ws.close();
+                }
+            },
             initWebSocket() {
                 const wsUrl = `ws://${window.location.host}/ws`;
                 this.ws = new WebSocket(wsUrl);
-
                 this.ws.onopen = () => { this.wsStatus = 'Connected'; };
-                this.ws.onmessage = (event) => {
-                    try { this.state = JSON.parse(event.data); } catch (e) { console.error('Failed to parse WebSocket message:', e); }
-                };
-                this.ws.onclose = () => {
-                    this.wsStatus = 'Disconnected. Retrying...';
-                    setTimeout(() => this.initWebSocket(), 3000);
-                };
-                this.ws.onerror = (error) => {
-                    this.wsStatus = 'Error';
-                    this.ws.close();
-                };
+                this.ws.onmessage = (event) => { try { this.state = JSON.parse(event.data); } catch (e) { console.error('Failed to parse WebSocket message:', e); } };
+                this.ws.onclose = () => { this.wsStatus = 'Disconnected. Retrying...'; if (this.loggedIn) { setTimeout(() => this.initWebSocket(), 3000); } };
+                this.ws.onerror = (error) => { this.wsStatus = 'Error'; this.ws.close(); };
             },
-
             openConfigModal(topic) {
                 this.currentTopic = topic;
                 this.saveStatus = '';
-                // Use existing config or set defaults
-                const defaultConfig = {
-                    dlqTopic: `dlq.${topic}`,
-                    maxRetries: 5,
-                    initialBackoff: 250
-                };
+                this.publish.status = '';
+                this.storedMessages = [];
+                const defaultConfig = { dlqTopic: `dlq.${topic}`, maxRetries: 5, initialBackoff: 250 };
                 this.currentConfig = { ...(this.state.topicConfigs[topic] || defaultConfig) };
                 this.showConfigModal = true;
+                this.fetchStoredMessages();
             },
-
             saveConfig() {
                 this.saveStatus = 'Saving...';
-                fetch('/api/config/topic', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        topic: this.currentTopic,
-                        config: {
-                            dlqTopic: this.currentConfig.dlqTopic,
-                            maxRetries: parseInt(this.currentConfig.maxRetries, 10),
-                            initialBackoff: parseInt(this.currentConfig.initialBackoff, 10)
-                        }
-                    })
-                })
-                    .then(response => {
-                        if (!response.ok) throw new Error('Failed to save');
-                        this.saveStatus = 'Saved!';
-                        setTimeout(() => this.showConfigModal = false, 1000);
-                    })
-                    .catch(() => {
-                        this.saveStatus = 'Error: Could not save config.';
-                    });
+                fetch('/api/config/topic', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ topic: this.currentTopic, config: { dlqTopic: this.currentConfig.dlqTopic, maxRetries: parseInt(this.currentConfig.maxRetries, 10), initialBackoff: parseInt(this.currentConfig.initialBackoff, 10) } }) })
+                    .then(res => { if (!res.ok) throw new Error(); this.saveStatus = 'Saved!'; setTimeout(() => this.saveStatus = '', 2000); })
+                    .catch(() => { this.saveStatus = 'Error: Could not save config.'; });
+            },
+            changePassword() {
+                this.admin.status = ''; this.admin.error = '';
+                if (this.admin.newPassword !== this.admin.confirmPassword) { this.admin.error = 'New passwords do not match.'; return; }
+                if (this.admin.newPassword.length < 6) { this.admin.error = 'New password must be at least 6 characters long.'; return; }
+                this.admin.status = 'Updating...';
+                fetch('/api/config/admin/password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ currentPassword: this.admin.currentPassword, newPassword: this.admin.newPassword }) })
+                    .then(res => { if (!res.ok) { return res.text().then(text => { throw new Error(text || 'Failed to update') }); } return res.json(); })
+                    .then(() => { this.admin.status = 'Password updated successfully!'; this.admin.error = ''; this.admin.currentPassword = ''; this.admin.newPassword = ''; this.admin.confirmPassword = ''; setTimeout(() => this.admin.status = '', 3000); })
+                    .catch(err => { this.admin.status = ''; this.admin.error = `Error: ${err.message}`; });
+            },
+            fetchStoredMessages() {
+                fetch(`/api/topic/${this.currentTopic}`)
+                    .then(res => res.json()).then(data => this.storedMessages = data)
+                    .catch(() => this.storedMessages = ['Error fetching messages.']);
+            },
+            purgeTopic() {
+                if (!confirm(`Are you sure you want to purge all messages for topic "${this.currentTopic}"? This cannot be undone.`)) return;
+                fetch(`/api/topic/${this.currentTopic}`, { method: 'DELETE' })
+                    .then(() => { this.fetchStoredMessages(); /* Refresh messages */ });
+            },
+            publishMessage() {
+                this.publish.status = 'Publishing...';
+                try {
+                    const payload = JSON.parse(this.publish.payload);
+                    fetch(`/api/topic/${this.currentTopic}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ payload }) })
+                        .then(res => { if (!res.ok) throw new Error(); this.publish.status = 'Published!'; setTimeout(() => this.publish.status = '', 2000); })
+                        .catch(() => this.publish.status = 'Error: Could not publish.');
+                } catch (e) {
+                    this.publish.status = 'Error: Invalid JSON.';
+                }
+            },
+            formatJson(msg) {
+                try { return JSON.stringify(JSON.parse(msg), null, 2); } catch { return msg; }
             }
         }));
     });
@@ -117,7 +117,7 @@
 
 <body class="bg-gray-900 text-gray-200 font-sans">
 
-    <div x-data="dashboard" x-cloak class="min-h-screen flex flex-col items-center justify-center p-4">
+    <div x-data="dashboard" x-init="init()" x-cloak class="min-h-screen flex flex-col items-center justify-center p-4">
 
         <!-- Login Screen -->
         <template x-if="!loggedIn">
@@ -159,6 +159,7 @@
                             :class="{ 'text-green-400': wsStatus === 'Connected', 'text-red-500': wsStatus !== 'Connected' }">
                             Status: <span x-text="wsStatus"></span>
                         </p>
+                        <button @click="logout()" class="mt-2 text-sm text-red-400 hover:underline">Logout</button>
                     </div>
                 </header>
 
@@ -202,6 +203,7 @@
                                     <tr>
                                         <th class="py-2 px-4 text-cyan-400">Topic</th>
                                         <th class="py-2 px-4 text-cyan-400">Subscriber Groups</th>
+                                        <th class="py-2 px-4 text-cyan-400">Stored Msgs</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -217,56 +219,149 @@
                                                         x-text="`${group.id} (${group.clients})`"></span>
                                                 </template>
                                             </td>
+                                            <td class="py-2 px-4 font-mono"
+                                                x-text="state.eventTopics[topic].storedMessageCount"></td>
                                         </tr>
                                     </template>
                                 </tbody>
                             </table>
                         </div>
                     </div>
+
+                    <!-- Admin Settings -->
+                    <div class="bg-gray-800 p-6 rounded-lg shadow-lg md:col-span-2">
+                        <h2 class="text-2xl font-semibold mb-4 border-b border-gray-700 pb-2">Admin Settings</h2>
+                        <form @submit.prevent="changePassword()" class="max-w-md">
+                            <p class="text-gray-400 mb-4">Change the dashboard admin password.</p>
+                            <div class="mb-4">
+                                <label class="block text-gray-400 text-sm font-bold mb-2" for="currentPassword">Current
+                                    Password</label>
+                                <input
+                                    class="shadow appearance-none border border-gray-700 rounded w-full py-2 px-3 bg-gray-700 text-gray-200"
+                                    id="currentPassword" type="password" x-model="admin.currentPassword"
+                                    placeholder="******************">
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-400 text-sm font-bold mb-2" for="newPassword">New
+                                    Password</label>
+                                <input
+                                    class="shadow appearance-none border border-gray-700 rounded w-full py-2 px-3 bg-gray-700 text-gray-200"
+                                    id="newPassword" type="password" x-model="admin.newPassword"
+                                    placeholder="******************">
+                            </div>
+                            <div class="mb-6">
+                                <label class="block text-gray-400 text-sm font-bold mb-2" for="confirmPassword">Confirm
+                                    New Password</label>
+                                <input
+                                    class="shadow appearance-none border border-gray-700 rounded w-full py-2 px-3 bg-gray-700 text-gray-200"
+                                    id="confirmPassword" type="password" x-model="admin.confirmPassword"
+                                    placeholder="******************">
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <button type="submit"
+                                    class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded">Change
+                                    Password</button>
+                                <p x-show="admin.status || admin.error" class="text-sm italic"
+                                    :class="{ 'text-green-400': admin.status, 'text-red-500': admin.error }"
+                                    x-text="admin.status || admin.error"></p>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
         </template>
 
-        <!-- Topic Config Modal -->
+        <!-- Topic Management Modal -->
         <template x-if="showConfigModal">
             <div class="fixed inset-0 modal-bg flex items-center justify-center z-50"
                 @click.self="showConfigModal = false">
-                <div class="bg-gray-800 rounded-lg shadow-xl p-8 w-full max-w-lg" @click.stop>
-                    <h2 class="text-2xl font-bold mb-4">Configure Topic</h2>
+                <div class="bg-gray-800 rounded-lg shadow-xl p-8 w-full max-w-3xl" @click.stop>
+                    <h2 class="text-2xl font-bold mb-2">Manage Topic</h2>
                     <p class="text-cyan-400 font-mono break-all mb-6" x-text="currentTopic"></p>
 
-                    <form @submit.prevent="saveConfig()">
-                        <div class="mb-4">
-                            <label class="block text-gray-400 text-sm font-bold mb-2" for="dlqTopic">Dead-Letter Queue
-                                (DLQ) Topic</label>
-                            <input
-                                class="shadow appearance-none border border-gray-700 rounded w-full py-2 px-3 bg-gray-700 text-gray-200"
-                                id="dlqTopic" type="text" x-model="currentConfig.dlqTopic">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <!-- Left: Config -->
+                        <div>
+                            <h3 class="text-xl font-semibold mb-4">Configuration</h3>
+                            <form @submit.prevent="saveConfig()">
+                                <div class="mb-4">
+                                    <label class="block text-gray-400 text-sm font-bold mb-2" for="dlqTopic">Dead-Letter
+                                        Queue (DLQ) Topic</label>
+                                    <input
+                                        class="shadow appearance-none border border-gray-700 rounded w-full py-2 px-3 bg-gray-700 text-gray-200"
+                                        id="dlqTopic" type="text" x-model="currentConfig.dlqTopic">
+                                </div>
+                                <div class="mb-4">
+                                    <label class="block text-gray-400 text-sm font-bold mb-2" for="maxRetries">Max
+                                        Retries</label>
+                                    <input
+                                        class="shadow appearance-none border border-gray-700 rounded w-full py-2 px-3 bg-gray-700 text-gray-200"
+                                        id="maxRetries" type="number" x-model.number="currentConfig.maxRetries">
+                                </div>
+                                <div class="mb-6">
+                                    <label class="block text-gray-400 text-sm font-bold mb-2"
+                                        for="initialBackoff">Initial Backoff (ms)</label>
+                                    <input
+                                        class="shadow appearance-none border border-gray-700 rounded w-full py-2 px-3 bg-gray-700 text-gray-200"
+                                        id="initialBackoff" type="number" x-model.number="currentConfig.initialBackoff">
+                                </div>
+                                <div class="flex items-center justify-end">
+                                    <p x-show="saveStatus" class="text-sm italic mr-4"
+                                        :class="{ 'text-green-400': saveStatus === 'Saved!', 'text-red-500': saveStatus.startsWith('Error') }"
+                                        x-text="saveStatus"></p>
+                                    <button type="submit"
+                                        class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded">Save
+                                        Config</button>
+                                </div>
+                            </form>
                         </div>
-                        <div class="mb-4">
-                            <label class="block text-gray-400 text-sm font-bold mb-2" for="maxRetries">Max
-                                Retries</label>
-                            <input
-                                class="shadow appearance-none border border-gray-700 rounded w-full py-2 px-3 bg-gray-700 text-gray-200"
-                                id="maxRetries" type="number" x-model.number="currentConfig.maxRetries">
+                        <!-- Right: Actions & Messages -->
+                        <div>
+                            <h3 class="text-xl font-semibold mb-4">Actions & Messages</h3>
+                            <!-- Publish -->
+                            <form @submit.prevent="publishMessage()" class="mb-6">
+                                <label class="block text-gray-400 text-sm font-bold mb-2" for="publishPayload">Publish
+                                    Test Message</label>
+                                <textarea x-model="publish.payload" id="publishPayload" rows="3"
+                                    class="shadow appearance-none border border-gray-700 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 font-mono text-sm"
+                                    placeholder='{ "key": "value" }'></textarea>
+                                <div class="flex items-center justify-end mt-2">
+                                    <p x-show="publish.status" class="text-sm italic mr-4"
+                                        :class="{ 'text-green-400': publish.status === 'Published!', 'text-red-500': publish.status.startsWith('Error') }"
+                                        x-text="publish.status"></p>
+                                    <button type="submit"
+                                        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Publish</button>
+                                </div>
+                            </form>
+                            <!-- Purge -->
+                            <div class="mb-6">
+                                <label class="block text-gray-400 text-sm font-bold mb-2">Purge Topic</label>
+                                <p class="text-xs text-gray-500 mb-2">Permanently delete all stored messages for this
+                                    topic from Redis.</p>
+                                <button @click="purgeTopic()"
+                                    class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Purge All
+                                    Messages</button>
+                            </div>
+                            <!-- Stored Messages -->
+                            <div>
+                                <label class="block text-gray-400 text-sm font-bold mb-2">Stored Messages (Last
+                                    100)</label>
+                                <div class="bg-gray-900 p-2 rounded h-48 overflow-y-auto border border-gray-700">
+                                    <template x-if="storedMessages.length === 0">
+                                        <p class="text-gray-500 italic text-sm p-2">No messages stored in Redis.</p>
+                                    </template>
+                                    <template x-for="(msg, index) in storedMessages" :key="index">
+                                        <pre class="text-xs p-2 border-b border-gray-700"
+                                            x-text="formatJson(msg)"></pre>
+                                    </template>
+                                </div>
+                            </div>
                         </div>
-                        <div class="mb-6">
-                            <label class="block text-gray-400 text-sm font-bold mb-2" for="initialBackoff">Initial
-                                Backoff (ms)</label>
-                            <input
-                                class="shadow appearance-none border border-gray-700 rounded w-full py-2 px-3 bg-gray-700 text-gray-200"
-                                id="initialBackoff" type="number" x-model.number="currentConfig.initialBackoff">
-                        </div>
-                        <div class="flex items-center justify-end space-x-4">
-                            <p x-show="saveStatus" class="text-sm italic"
-                                :class="{ 'text-green-400': saveStatus === 'Saved!', 'text-red-500': saveStatus.startsWith('Error') }"
-                                x-text="saveStatus"></p>
-                            <button @click="showConfigModal = false" type="button"
-                                class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Cancel</button>
-                            <button type="submit"
-                                class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded">Save</button>
-                        </div>
-                    </form>
+                    </div>
+                    <div class="text-center mt-6">
+                        <button @click="showConfigModal = false" type="button"
+                            class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Close</button>
+                    </div>
                 </div>
             </div>
         </template>

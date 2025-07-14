@@ -111,3 +111,39 @@
 {"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-1"}}
 {"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-2"}}
 {"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-3"}}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"REGISTER","topic":"user.v1.UserService.GetUserProfile"}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"REQUEST","topic":"user.v1.UserService.GetUserProfile","payload":{"user_id":"u-123"},"correlation_id":"1a3c2dea-4485-454b-bad1-ee66959441b4"}
+{"action":"RESPOND","payload":{"email":"alice@example.com","name":"Alice","user_id":"u-123"},"correlation_id":"1a3c2dea-4485-454b-bad1-ee66959441b4"}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-0"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-1"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-2"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-3"}}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"REGISTER","topic":"user.v1.UserService.GetUserProfile"}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"REQUEST","topic":"user.v1.UserService.GetUserProfile","payload":{"user_id":"u-123"},"correlation_id":"2988ff52-976f-4db0-a314-09779b9a0709"}
+{"action":"RESPOND","payload":{"email":"alice@example.com","name":"Alice","user_id":"u-123"},"correlation_id":"2988ff52-976f-4db0-a314-09779b9a0709"}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-0"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-1"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-2"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-3"}}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"REGISTER","topic":"user.v1.UserService.GetUserProfile"}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"REQUEST","topic":"user.v1.UserService.GetUserProfile","payload":{"user_id":"u-123"},"correlation_id":"6468a1b0-6f73-4b59-88ce-5af2ac843faa"}
+{"action":"RESPOND","payload":{"email":"alice@example.com","name":"Alice","user_id":"u-123"},"correlation_id":"6468a1b0-6f73-4b59-88ce-5af2ac843faa"}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-0"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-1"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-2"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-3"}}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"REGISTER","topic":"user.v1.UserService.GetUserProfile"}
+{"action":"REQUEST","topic":"user.v1.UserService.GetUserProfile","payload":{"user_id":"u-123"},"correlation_id":"ef0b7055-9207-489a-9bbe-1ccdaf7c08df"}
+{"action":"RESPOND","payload":{"email":"alice@example.com","name":"Alice","user_id":"u-123"},"correlation_id":"ef0b7055-9207-489a-9bbe-1ccdaf7c08df"}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-0"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-1"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-2"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-3"}}

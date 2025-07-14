@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -162,23 +163,17 @@ func (b *Broker) Start(addr string) error {
 	var err error
 
 	if b.config.TLSEnabled {
-		// Setup TLS configuration for the broker
 		cert, err := tls.LoadX509KeyPair(b.config.CertFile, b.config.KeyFile)
 		if err != nil {
 			return fmt.Errorf("failed to load server certificate and key: %w", err)
 		}
-		tlsConfig := &tls.Config{
-			Certificates: []tls.Certificate{cert},
-		}
-
-		// Listen for secure connections
+		tlsConfig := &tls.Config{Certificates: []tls.Certificate{cert}}
 		l, err = tls.Listen("tcp", addr, tlsConfig)
 		if err != nil {
 			return err
 		}
 		log.Printf("TRPC Broker listening securely with TLS on %s", addr)
 	} else {
-		// Listen for standard, unencrypted connections
 		l, err = net.Listen("tcp", addr)
 		if err != nil {
 			return err
@@ -478,7 +473,8 @@ type GuiSubscriberGroup struct {
 	Clients int    `json:"clients"`
 }
 type GuiEventTopicInfo struct {
-	Groups []GuiSubscriberGroup `json:"groups"`
+	Groups             []GuiSubscriberGroup `json:"groups"`
+	StoredMessageCount int64                `json:"storedMessageCount"`
 }
 type GuiState struct {
 	ConnectedClients int                          `json:"connectedClients"`
@@ -489,26 +485,41 @@ type GuiState struct {
 
 func (b *Broker) broadcastState() { /* ... same as before ... */
 	b.mu.RLock()
+	defer b.mu.RUnlock()
 	state := GuiState{
 		ConnectedClients: len(b.clients),
 		EventTopics:      make(map[string]GuiEventTopicInfo),
 		RpcTopics:        make(map[string]int),
 		TopicConfigs:     b.config.TopicConfigs,
 	}
-	for topic, subs := range b.eventSubs {
+	allTopics := make(map[string]bool)
+	for topic := range b.eventSubs {
+		allTopics[topic] = true
+	}
+	keys, _ := b.rdb.Keys(b.ctx, redisMessagesPrefix+"*").Result()
+	for _, key := range keys {
+		topic := strings.TrimPrefix(key, redisMessagesPrefix)
+		allTopics[topic] = true
+	}
+	for topic := range allTopics {
 		info := GuiEventTopicInfo{Groups: []GuiSubscriberGroup{}}
-		for subID, clients := range subs {
-			info.Groups = append(info.Groups, GuiSubscriberGroup{
-				ID:      subID,
-				Clients: len(clients),
-			})
+		if subs, ok := b.eventSubs[topic]; ok {
+			for subID, clients := range subs {
+				info.Groups = append(info.Groups, GuiSubscriberGroup{
+					ID:      subID,
+					Clients: len(clients),
+				})
+			}
+		}
+		count, err := b.rdb.LLen(b.ctx, redisMessagesPrefix+topic).Result()
+		if err == nil {
+			info.StoredMessageCount = count
 		}
 		state.EventTopics[topic] = info
 	}
 	for topic, handlers := range b.rpcHandlers {
 		state.RpcTopics[topic] = len(handlers)
 	}
-	b.mu.RUnlock()
 	stateBytes, err := json.Marshal(state)
 	if err != nil {
 		log.Printf("Error marshaling GUI state: %v", err)
@@ -529,7 +540,7 @@ func loadConfigFromRedis(ctx context.Context, rdb *redis.Client) (Config, error)
 		MaxRetries:     5,
 		InitialBackoff: 250 * time.Millisecond,
 		TopicConfigs:   make(map[string]TopicConfig),
-		TLSEnabled:     false, // Default to insecure
+		TLSEnabled:     false,
 		CertFile:       "server.crt",
 		KeyFile:        "server.key",
 	}
@@ -628,7 +639,7 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func startHttpServer(b *Broker) { /* ... same as before ... */
+func startHttpServer(b *Broker) {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "index.html")
 	})
@@ -717,8 +728,49 @@ func startHttpServer(b *Broker) { /* ... same as before ... */
 			return
 		}
 		log.Println("Admin password has been updated.")
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status":"ok"}`))
 	})
+
+	// New API endpoints for topic management
+	http.HandleFunc("/api/topic/", func(w http.ResponseWriter, r *http.Request) {
+		topic := strings.TrimPrefix(r.URL.Path, "/api/topic/")
+		redisKey := redisMessagesPrefix + topic
+		switch r.Method {
+		case http.MethodGet: // Get messages
+			messages, err := b.rdb.LRange(b.ctx, redisKey, 0, 99).Result()
+			if err != nil {
+				http.Error(w, "Failed to get messages from Redis", http.StatusInternalServerError)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(messages)
+		case http.MethodPost: // Publish message
+			var req struct {
+				Payload json.RawMessage `json:"payload"`
+			}
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+				http.Error(w, "Invalid request body", http.StatusBadRequest)
+				return
+			}
+			b.mu.Lock()
+			b.publishInternal(topic, req.Payload)
+			b.mu.Unlock()
+			w.WriteHeader(http.StatusOK)
+		case http.MethodDelete: // Purge messages
+			if err := b.rdb.Del(b.ctx, redisKey).Err(); err != nil {
+				http.Error(w, "Failed to purge messages from Redis", http.StatusInternalServerError)
+				return
+			}
+			log.Printf("Purged all messages for topic '%s'", topic)
+			b.broadcastState()
+			w.WriteHeader(http.StatusOK)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
 	log.Println("HTTP server for GUI starting on :8080")
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		log.Fatalf("HTTP server failed: %v", err)
