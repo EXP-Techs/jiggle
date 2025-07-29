@@ -147,3 +147,38 @@
 {"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-1"}}
 {"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-2"}}
 {"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-3"}}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"REGISTER","topic":"user.v1.UserService.GetUserProfile"}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"REQUEST","topic":"user.v1.UserService.GetUserProfile","payload":{"user_id":"u-123"},"correlation_id":"beb79917-4801-4e72-b195-9fef5978aabd"}
+{"action":"RESPOND","payload":{"email":"alice@example.com","name":"Alice","user_id":"u-123"},"correlation_id":"beb79917-4801-4e72-b195-9fef5978aabd"}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-0"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-1"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-2"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-3"}}
+{"action":"REGISTER","topic":"user.v1.UserService.GetUserProfile"}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"SUBSCRIBE","topic":"user.v1.UserService.UserCreated","payload":{"subscriber_id":"email-service-group"}}
+{"action":"REQUEST","topic":"user.v1.UserService.GetUserProfile","payload":{"user_id":"u-123"},"correlation_id":"04d357b7-6f46-4e9e-9d1e-8d7848eeb6d0"}
+{"action":"RESPOND","payload":{"email":"alice@example.com","name":"Alice","user_id":"u-123"},"correlation_id":"04d357b7-6f46-4e9e-9d1e-8d7848eeb6d0"}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-0"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-1"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-2"}}
+{"action":"PUBLISH","topic":"user.v1.UserService.UserCreated","payload":{"name":"New User","user_id":"u-new-3"}}
+{"action":"REQUEST","topic":"user_v1.UserService.CreateUser","payload":{"name":"Bob","email":"bob@example.com","password":""},"correlation_id":"f103c95f-129d-4ef9-9bf6-9ba979d9ef08"}
+{"action":"REGISTER","topic":"user_v1.UserService.GetUser"}
+{"action":"REGISTER","topic":"user_v1.UserService.GetUser"}
+{"action":"REGISTER","topic":"user_v1.UserService.CreateUser"}
+{"action":"REGISTER","topic":"user_v1.UserService.CreateUser"}
+{"action":"REGISTER","topic":"user_v1.UserService.UpdateUser"}
+{"action":"REGISTER","topic":"user_v1.UserService.UpdateUser"}
+{"action":"SUBSCRIBE","topic":"user_v1.UserService.UserCreated","payload":{"subscriber_id":"userservice-usercreated-group"}}
+{"action":"SUBSCRIBE","topic":"user_v1.UserService.UserCreated","payload":{"subscriber_id":"userservice-usercreated-group"}}
+{"action":"SUBSCRIBE","topic":"user_v1.UserService.UserUpdated","payload":{"subscriber_id":"userservice-userupdated-group"}}
+{"action":"SUBSCRIBE","topic":"user_v1.UserService.UserUpdated","payload":{"subscriber_id":"userservice-userupdated-group"}}
+{"action":"SUBSCRIBE","topic":"user_v1.UserService.UserDeleted","payload":{"subscriber_id":"userservice-userdeleted-group"}}
+{"action":"SUBSCRIBE","topic":"user_v1.UserService.UserDeleted","payload":{"subscriber_id":"userservice-userdeleted-group"}}
+{"action":"REQUEST","topic":"user_v1.UserService.CreateUser","payload":{"name":"Bob","email":"bob@example.com","password":""},"correlation_id":"0e4f9fcc-0ca8-4c4f-beea-67ccbfd4c571"}
+{"action":"RESPOND","payload":{"user_id":"u-new-123","name":"Bob","email":"bob@example.com","is_active":false,"created_at":0},"correlation_id":"0e4f9fcc-0ca8-4c4f-beea-67ccbfd4c571"}
+{"action":"PUBLISH","topic":"user_v1.UserService.UserCreated","payload":{"user_id":"u-new-123","name":"Bob","email":"bob@example.com","is_active":false,"created_at":0}}
+{"action":"ACK","topic":"user_v1.UserService.UserCreated","message_id":"98b9928d-63e2-4f6d-b909-6c86f99a2806"}

@@ -5,7 +5,7 @@
         Alpine.data('dashboard', () => ({
             loggedIn: false, password: '', error: '', ws: null, wsStatus: 'Disconnected',
             state: { connectedClients: 0, eventTopics: {}, rpcTopics: {}, topicConfigs: {} },
-            showConfigModal: false, currentTopic: '',
+            showConfigModal: false, currentTopic: '', isRpcTopic: false,
             currentConfig: { dlqTopic: '', initialBackoff: 0, maxRetries: 0 },
             saveStatus: '',
             storedMessages: [],
@@ -44,15 +44,18 @@
                 this.ws.onclose = () => { this.wsStatus = 'Disconnected. Retrying...'; if (this.loggedIn) { setTimeout(() => this.initWebSocket(), 3000); } };
                 this.ws.onerror = (error) => { this.wsStatus = 'Error'; this.ws.close(); };
             },
-            openConfigModal(topic) {
+            openConfigModal(topic, isRpc) {
                 this.currentTopic = topic;
+                this.isRpcTopic = isRpc;
                 this.saveStatus = '';
                 this.publish.status = '';
                 this.storedMessages = [];
                 const defaultConfig = { dlqTopic: `dlq.${topic}`, maxRetries: 5, initialBackoff: 250 };
                 this.currentConfig = { ...(this.state.topicConfigs[topic] || defaultConfig) };
                 this.showConfigModal = true;
-                this.fetchStoredMessages();
+                if (!isRpc) {
+                    this.fetchStoredMessages();
+                }
             },
             saveConfig() {
                 this.saveStatus = 'Saving...';
@@ -181,7 +184,8 @@
                                 <tbody>
                                     <template x-for="topic in Object.keys(state.rpcTopics).sort()" :key="topic">
                                         <tr class="border-t border-gray-700 hover:bg-gray-700/50">
-                                            <td class="py-2 px-4"><a href="#" @click.prevent="openConfigModal(topic)"
+                                            <td class="py-2 px-4"><a href="#"
+                                                    @click.prevent="openConfigModal(topic, true)"
                                                     class="text-cyan-400 hover:underline" x-text="topic"></a></td>
                                             <td class="py-2 px-4 font-mono" x-text="state.rpcTopics[topic]"></td>
                                         </tr>
@@ -209,7 +213,8 @@
                                 <tbody>
                                     <template x-for="topic in Object.keys(state.eventTopics).sort()" :key="topic">
                                         <tr class="border-t border-gray-700 hover:bg-gray-700/50">
-                                            <td class="py-2 px-4"><a href="#" @click.prevent="openConfigModal(topic)"
+                                            <td class="py-2 px-4"><a href="#"
+                                                    @click.prevent="openConfigModal(topic, false)"
                                                     class="text-cyan-400 hover:underline" x-text="topic"></a></td>
                                             <td class="py-2 px-4">
                                                 <template x-for="group in state.eventTopics[topic].groups"
@@ -230,42 +235,50 @@
 
                     <!-- Admin Settings -->
                     <div class="bg-gray-800 p-6 rounded-lg shadow-lg md:col-span-2">
-                        <h2 class="text-2xl font-semibold mb-4 border-b border-gray-700 pb-2">Admin Settings</h2>
-                        <form @submit.prevent="changePassword()" class="max-w-md">
-                            <p class="text-gray-400 mb-4">Change the dashboard admin password.</p>
-                            <div class="mb-4">
-                                <label class="block text-gray-400 text-sm font-bold mb-2" for="currentPassword">Current
-                                    Password</label>
-                                <input
-                                    class="shadow appearance-none border border-gray-700 rounded w-full py-2 px-3 bg-gray-700 text-gray-200"
-                                    id="currentPassword" type="password" x-model="admin.currentPassword"
-                                    placeholder="******************">
+                        <h2 class="text-2xl font-semibold mb-4 border-b border-gray-700 pb-2">Admin & Monitoring</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <form @submit.prevent="changePassword()" class="">
+                                <p class="text-gray-400 mb-4">Change the dashboard admin password.</p>
+                                <div class="mb-4">
+                                    <label class="block text-gray-400 text-sm font-bold mb-2"
+                                        for="currentPassword">Current Password</label>
+                                    <input
+                                        class="shadow appearance-none border border-gray-700 rounded w-full py-2 px-3 bg-gray-700 text-gray-200"
+                                        id="currentPassword" type="password" x-model="admin.currentPassword"
+                                        placeholder="******************">
+                                </div>
+                                <div class="mb-4">
+                                    <label class="block text-gray-400 text-sm font-bold mb-2" for="newPassword">New
+                                        Password</label>
+                                    <input
+                                        class="shadow appearance-none border border-gray-700 rounded w-full py-2 px-3 bg-gray-700 text-gray-200"
+                                        id="newPassword" type="password" x-model="admin.newPassword"
+                                        placeholder="******************">
+                                </div>
+                                <div class="mb-6">
+                                    <label class="block text-gray-400 text-sm font-bold mb-2"
+                                        for="confirmPassword">Confirm New Password</label>
+                                    <input
+                                        class="shadow appearance-none border border-gray-700 rounded w-full py-2 px-3 bg-gray-700 text-gray-200"
+                                        id="confirmPassword" type="password" x-model="admin.confirmPassword"
+                                        placeholder="******************">
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <button type="submit"
+                                        class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded">Change
+                                        Password</button>
+                                    <p x-show="admin.status || admin.error" class="text-sm italic"
+                                        :class="{ 'text-green-400': admin.status, 'text-red-500': admin.error }"
+                                        x-text="admin.status || admin.error"></p>
+                                </div>
+                            </form>
+                            <div>
+                                <p class="text-gray-400 mb-4">View operational metrics for monitoring.</p>
+                                <a href="/metrics" target="_blank"
+                                    class="inline-block bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">View
+                                    Prometheus Metrics</a>
                             </div>
-                            <div class="mb-4">
-                                <label class="block text-gray-400 text-sm font-bold mb-2" for="newPassword">New
-                                    Password</label>
-                                <input
-                                    class="shadow appearance-none border border-gray-700 rounded w-full py-2 px-3 bg-gray-700 text-gray-200"
-                                    id="newPassword" type="password" x-model="admin.newPassword"
-                                    placeholder="******************">
-                            </div>
-                            <div class="mb-6">
-                                <label class="block text-gray-400 text-sm font-bold mb-2" for="confirmPassword">Confirm
-                                    New Password</label>
-                                <input
-                                    class="shadow appearance-none border border-gray-700 rounded w-full py-2 px-3 bg-gray-700 text-gray-200"
-                                    id="confirmPassword" type="password" x-model="admin.confirmPassword"
-                                    placeholder="******************">
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <button type="submit"
-                                    class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded">Change
-                                    Password</button>
-                                <p x-show="admin.status || admin.error" class="text-sm italic"
-                                    :class="{ 'text-green-400': admin.status, 'text-red-500': admin.error }"
-                                    x-text="admin.status || admin.error"></p>
-                            </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -318,44 +331,54 @@
                         <!-- Right: Actions & Messages -->
                         <div>
                             <h3 class="text-xl font-semibold mb-4">Actions & Messages</h3>
-                            <!-- Publish -->
-                            <form @submit.prevent="publishMessage()" class="mb-6">
-                                <label class="block text-gray-400 text-sm font-bold mb-2" for="publishPayload">Publish
-                                    Test Message</label>
-                                <textarea x-model="publish.payload" id="publishPayload" rows="3"
-                                    class="shadow appearance-none border border-gray-700 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 font-mono text-sm"
-                                    placeholder='{ "key": "value" }'></textarea>
-                                <div class="flex items-center justify-end mt-2">
-                                    <p x-show="publish.status" class="text-sm italic mr-4"
-                                        :class="{ 'text-green-400': publish.status === 'Published!', 'text-red-500': publish.status.startsWith('Error') }"
-                                        x-text="publish.status"></p>
-                                    <button type="submit"
-                                        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Publish</button>
+                            <template x-if="!isRpcTopic">
+                                <div>
+                                    <!-- Publish -->
+                                    <form @submit.prevent="publishMessage()" class="mb-6">
+                                        <label class="block text-gray-400 text-sm font-bold mb-2"
+                                            for="publishPayload">Publish Test Message</label>
+                                        <textarea x-model="publish.payload" id="publishPayload" rows="3"
+                                            class="shadow appearance-none border border-gray-700 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 font-mono text-sm"
+                                            placeholder='{ "key": "value" }'></textarea>
+                                        <div class="flex items-center justify-end mt-2">
+                                            <p x-show="publish.status" class="text-sm italic mr-4"
+                                                :class="{ 'text-green-400': publish.status === 'Published!', 'text-red-500': publish.status.startsWith('Error') }"
+                                                x-text="publish.status"></p>
+                                            <button type="submit"
+                                                class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Publish</button>
+                                        </div>
+                                    </form>
+                                    <!-- Purge -->
+                                    <div class="mb-6">
+                                        <label class="block text-gray-400 text-sm font-bold mb-2">Purge Topic</label>
+                                        <p class="text-xs text-gray-500 mb-2">Permanently delete all stored messages for
+                                            this topic from Redis.</p>
+                                        <button @click="purgeTopic()"
+                                            class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Purge
+                                            All Messages</button>
+                                    </div>
+                                    <!-- Stored Messages -->
+                                    <div>
+                                        <label class="block text-gray-400 text-sm font-bold mb-2">Stored Messages (Last
+                                            100)</label>
+                                        <div
+                                            class="bg-gray-900 p-2 rounded h-48 overflow-y-auto border border-gray-700">
+                                            <template x-if="storedMessages.length === 0">
+                                                <p class="text-gray-500 italic text-sm p-2">No messages stored in Redis.
+                                                </p>
+                                            </template>
+                                            <template x-for="(msg, index) in storedMessages" :key="index">
+                                                <pre class="text-xs p-2 border-b border-gray-700"
+                                                    x-text="formatJson(msg)"></pre>
+                                            </template>
+                                        </div>
+                                    </div>
                                 </div>
-                            </form>
-                            <!-- Purge -->
-                            <div class="mb-6">
-                                <label class="block text-gray-400 text-sm font-bold mb-2">Purge Topic</label>
-                                <p class="text-xs text-gray-500 mb-2">Permanently delete all stored messages for this
-                                    topic from Redis.</p>
-                                <button @click="purgeTopic()"
-                                    class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Purge All
-                                    Messages</button>
-                            </div>
-                            <!-- Stored Messages -->
-                            <div>
-                                <label class="block text-gray-400 text-sm font-bold mb-2">Stored Messages (Last
-                                    100)</label>
-                                <div class="bg-gray-900 p-2 rounded h-48 overflow-y-auto border border-gray-700">
-                                    <template x-if="storedMessages.length === 0">
-                                        <p class="text-gray-500 italic text-sm p-2">No messages stored in Redis.</p>
-                                    </template>
-                                    <template x-for="(msg, index) in storedMessages" :key="index">
-                                        <pre class="text-xs p-2 border-b border-gray-700"
-                                            x-text="formatJson(msg)"></pre>
-                                    </template>
-                                </div>
-                            </div>
+                            </template>
+                            <template x-if="isRpcTopic">
+                                <p class="text-gray-500 italic">Management actions like publishing and purging are not
+                                    applicable to RPC topics.</p>
+                            </template>
                         </div>
                     </div>
                     <div class="text-center mt-6">

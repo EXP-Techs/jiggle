@@ -3,7 +3,14 @@
 
 package user_v1
 
-import "context"
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"time"
+
+	driver "github.com/exp-techs/jiggle/trpc-gen-go/driver"
+)
 
 // ========== Message Definitions ==========
 
@@ -31,33 +38,133 @@ type UpdateUserRequest struct {
 	Email  string `json:"email"`
 }
 
-// ========== Service Definitions ==========
+// ========== UserService Service Client ==========
+
+// UserServiceClient is the client API for the UserService service.
+type UserServiceClient interface {
+	GetUser(ctx context.Context, in *GetUserRequest) (*User, error)
+	CreateUser(ctx context.Context, in *CreateUserRequest) (*User, error)
+	UpdateUser(ctx context.Context, in *UpdateUserRequest) (*User, error)
+	PublishUserCreated(ctx context.Context, msg *User) error
+	PublishUserUpdated(ctx context.Context, msg *User) error
+	PublishUserDeleted(ctx context.Context, msg *GetUserRequest) error
+}
+
+type userserviceClient struct {
+	driver driver.ClientDriver
+}
+
+func NewUserServiceClient(drv driver.ClientDriver) UserServiceClient {
+	return &userserviceClient{driver: drv}
+}
+
+func (c *userserviceClient) GetUser(ctx context.Context, in *GetUserRequest) (*User, error) {
+	topic := "user_v1.UserService.GetUser"
+	resp, err := c.driver.Request(topic, in, 5*time.Second)
+	if err != nil {
+		return nil, err
+	}
+	var out User
+	if err := json.Unmarshal(resp.Payload, &out); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal response payload: %w", err)
+	}
+	return &out, nil
+}
+
+func (c *userserviceClient) CreateUser(ctx context.Context, in *CreateUserRequest) (*User, error) {
+	topic := "user_v1.UserService.CreateUser"
+	resp, err := c.driver.Request(topic, in, 5*time.Second)
+	if err != nil {
+		return nil, err
+	}
+	var out User
+	if err := json.Unmarshal(resp.Payload, &out); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal response payload: %w", err)
+	}
+	return &out, nil
+}
+
+func (c *userserviceClient) UpdateUser(ctx context.Context, in *UpdateUserRequest) (*User, error) {
+	topic := "user_v1.UserService.UpdateUser"
+	resp, err := c.driver.Request(topic, in, 5*time.Second)
+	if err != nil {
+		return nil, err
+	}
+	var out User
+	if err := json.Unmarshal(resp.Payload, &out); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal response payload: %w", err)
+	}
+	return &out, nil
+}
+
+func (c *userserviceClient) PublishUserCreated(ctx context.Context, msg *User) error {
+	topic := "user_v1.UserService.UserCreated"
+	return c.driver.Publish(topic, msg)
+}
+
+func (c *userserviceClient) PublishUserUpdated(ctx context.Context, msg *User) error {
+	topic := "user_v1.UserService.UserUpdated"
+	return c.driver.Publish(topic, msg)
+}
+
+func (c *userserviceClient) PublishUserDeleted(ctx context.Context, msg *GetUserRequest) error {
+	topic := "user_v1.UserService.UserDeleted"
+	return c.driver.Publish(topic, msg)
+}
+
+// ========== UserService Service Server ==========
 
 // UserServiceServer is the server API for the UserService service.
 type UserServiceServer interface {
 	GetUser(context.Context, *GetUserRequest) (*User, error)
 	CreateUser(context.Context, *CreateUserRequest) (*User, error)
 	UpdateUser(context.Context, *UpdateUserRequest) (*User, error)
-	// HandleUserCreated handles the asynchronous UserCreated event.
 	HandleUserCreated(context.Context, *User) error
-	// HandleUserUpdated handles the asynchronous UserUpdated event.
 	HandleUserUpdated(context.Context, *User) error
-	// HandleUserDeleted handles the asynchronous UserDeleted event.
 	HandleUserDeleted(context.Context, *GetUserRequest) error
 }
 
-// UserServiceClient is the client API for the UserService service.
-type UserServiceClient interface {
-	// GetUser performs a synchronous RPC call.
-	GetUser(ctx context.Context, in *GetUserRequest) (*User, error)
-	// CreateUser performs a synchronous RPC call.
-	CreateUser(ctx context.Context, in *CreateUserRequest) (*User, error)
-	// UpdateUser performs a synchronous RPC call.
-	UpdateUser(ctx context.Context, in *UpdateUserRequest) (*User, error)
-	// PublishUserCreated publishes the asynchronous UserCreated event.
-	PublishUserCreated(ctx context.Context, msg *User) error
-	// PublishUserUpdated publishes the asynchronous UserUpdated event.
-	PublishUserUpdated(ctx context.Context, msg *User) error
-	// PublishUserDeleted publishes the asynchronous UserDeleted event.
-	PublishUserDeleted(ctx context.Context, msg *GetUserRequest) error
+func RegisterUserServiceServer(drv driver.ClientDriver, srv UserServiceServer) {
+	drv.Register("user_v1.UserService.GetUser", func(req driver.Message) (any, error) {
+		var in GetUserRequest
+		if err := json.Unmarshal(req.Payload, &in); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal request payload: %w", err)
+		}
+		return srv.GetUser(context.Background(), &in)
+	})
+	drv.Register("user_v1.UserService.CreateUser", func(req driver.Message) (any, error) {
+		var in CreateUserRequest
+		if err := json.Unmarshal(req.Payload, &in); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal request payload: %w", err)
+		}
+		return srv.CreateUser(context.Background(), &in)
+	})
+	drv.Register("user_v1.UserService.UpdateUser", func(req driver.Message) (any, error) {
+		var in UpdateUserRequest
+		if err := json.Unmarshal(req.Payload, &in); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal request payload: %w", err)
+		}
+		return srv.UpdateUser(context.Background(), &in)
+	})
+	drv.Subscribe("user_v1.UserService.UserCreated", "userservice-usercreated-group", func(msg driver.Message) error {
+		var event User
+		if err := json.Unmarshal(msg.Payload, &event); err != nil {
+			return fmt.Errorf("failed to unmarshal event payload: %w", err)
+		}
+		return srv.HandleUserCreated(context.Background(), &event)
+	})
+	drv.Subscribe("user_v1.UserService.UserUpdated", "userservice-userupdated-group", func(msg driver.Message) error {
+		var event User
+		if err := json.Unmarshal(msg.Payload, &event); err != nil {
+			return fmt.Errorf("failed to unmarshal event payload: %w", err)
+		}
+		return srv.HandleUserUpdated(context.Background(), &event)
+	})
+	drv.Subscribe("user_v1.UserService.UserDeleted", "userservice-userdeleted-group", func(msg driver.Message) error {
+		var event GetUserRequest
+		if err := json.Unmarshal(msg.Payload, &event); err != nil {
+			return fmt.Errorf("failed to unmarshal event payload: %w", err)
+		}
+		return srv.HandleUserDeleted(context.Background(), &event)
+	})
 }
